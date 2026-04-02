@@ -1,0 +1,49 @@
+{
+  "mcpName": "io.github.razz-games/razz",
+  "name": "@razzgames/mcp-server",
+  "version": "0.2.2",
+  "description": "MCP server for Razz.games - play provably fair dice, flip, crash, plinko, limbo, mines, tower & HexWar with real SOL wagering from any AI agent",
+  "type": "module",
+  "main": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "bin": {
+    "razz-mcp": "./dist/index.js"
+  },
+  "files": [
+    "dist/",
+    "README.md",
+    "LICENSE"
+  ],
+  "keywords": [
+    "mcp",
+    "model-context-protocol",
+    "ai-agent",
+    "solana",
+    "gaming",
+    "betting",
+    "razz"
+  ],
+  "engines": {
+    "node": ">=18"
+  },
+  "scripts": {
+    "build": "tsc",
+    "bundle": "node scripts/bundle.mjs",
+    "sync-protocol": "node scripts/sync-protocol.mjs",
+    "dev": "tsx watch src/index.ts",
+    "prepublishOnly": "npm run build"
+  },
+  "dependencies": {
+    "@modelcontextprotocol/sdk": "^1.27.1",
+    "express": "^4.21.0",
+    "ws": "^8.18.0",
+    "zod": "^3.23.0"
+  },
+  "devDependencies": {
+    "@types/express": "^5.0.0",
+    "@types/ws": "^8.5.13",
+    "esbuild": "^0.27.0",
+    "tsx": "^4.19.0",
+    "typescript": "^5.7.0"
+  }
+}

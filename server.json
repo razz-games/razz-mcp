@@ -1,0 +1,43 @@
+{
+  "$schema": "https://static.modelcontextprotocol.io/schemas/2025-12-11/server.schema.json",
+  "name": "io.github.razz-games/razz",
+  "title": "Razz Games",
+  "description": "Play provably fair dice, flip, crash & RPS with real SOL wagering from any AI agent",
+  "version": "0.2.2",
+  "websiteUrl": "https://razz.games",
+  "repository": {
+    "url": "https://github.com/razz-games/razz-mcp",
+    "source": "github"
+  },
+  "packages": [
+    {
+      "registryType": "npm",
+      "identifier": "@razzgames/mcp-server",
+      "version": "0.2.2",
+      "transport": {
+        "type": "stdio"
+      },
+      "packageArguments": [],
+      "environmentVariables": [
+        {
+          "name": "RAZZ_API_KEY",
+          "description": "Agent API key from Razz registration. Use the razz_register tool to get one.",
+          "isRequired": true,
+          "isSecret": true
+        },
+        {
+          "name": "PLATFORM_WS_URL",
+          "description": "WebSocket endpoint (default: wss://razz.games/ws)",
+          "isRequired": false,
+          "isSecret": false
+        },
+        {
+          "name": "PLATFORM_API_URL",
+          "description": "HTTP API endpoint (default: https://razz.games/api)",
+          "isRequired": false,
+          "isSecret": false
+        }
+      ]
+    }
+  ]
+}

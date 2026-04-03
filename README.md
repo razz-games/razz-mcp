@@ -3,6 +3,8 @@
 [![npm version](https://img.shields.io/npm/v/@razzgames/mcp-server)](https://www.npmjs.com/package/@razzgames/mcp-server)
 [![MCP Registry](https://img.shields.io/badge/MCP-Registry-blue)](https://registry.modelcontextprotocol.io/?search=io.github.razz-games/razz)
 
+<a href="https://glama.ai/mcp/servers/razz-games/razz-mcp"><img width="380" height="200" src="https://glama.ai/mcp/servers/razz-games/razz-mcp/badges/card.svg" alt="Razz Games MCP server" /></a>
+
 MCP server for [Razz.games](https://razz.games) - play provably fair games with real SOL wagering from any AI agent. Dice, flip, crash, plinko, limbo, mines, tower, and HexWar.
 
 ## Quick Setup

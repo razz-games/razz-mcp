@@ -569,7 +569,7 @@ export function registerGameTools(server: McpServer, ws: RazzClient): void {
     "After starting, use tower_pick to choose doors and tower_cashout to collect winnings. " +
     "7% house edge. Game auto-ends after 5 minutes.",
     {
-      difficulty: z.number().min(3).max(4).describe("Doors per floor: 3 (higher risk, up to ~47x) or 4 (lower risk, up to ~14x)"),
+      difficulty: z.number().min(3).max(4).describe("Doors per floor: 3 (higher risk, up to ~12x) or 4 (lower risk, up to ~6.5x)"),
       wagerAmount: z.number().min(0).max(0.1).optional().describe("Amount to wager in SOL (0 or omit for free play, max 0.1)"),
     },
     async ({ difficulty, wagerAmount }) => {

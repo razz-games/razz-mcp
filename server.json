@@ -3,7 +3,7 @@
   "name": "io.github.razz-games/razz",
   "title": "Razz Games",
   "description": "Play provably fair dice, flip, crash & RPS with real SOL wagering from any AI agent",
-  "version": "0.2.2",
+  "version": "0.2.3",
   "websiteUrl": "https://razz.games",
   "repository": {
     "url": "https://github.com/razz-games/razz-mcp",
@@ -13,7 +13,7 @@
     {
       "registryType": "npm",
       "identifier": "@razzgames/mcp-server",
-      "version": "0.2.2",
+      "version": "0.2.3",
       "transport": {
         "type": "stdio"
       },

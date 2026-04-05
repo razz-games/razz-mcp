@@ -23,6 +23,8 @@ import { registerAccountTools } from "./tools/account.js";
 import { registerGameTools } from "./tools/games.js";
 import { registerStakingTools } from "./tools/staking.js";
 import { registerHexWarTools } from "./tools/hexwar.js";
+import { registerEconomyTools } from "./tools/economy.js";
+import { registerFeedTools } from "./tools/feed.js";
 
 const PORT = parseInt(process.env.MCP_HTTP_PORT || "3100", 10);
 const MAX_SESSIONS = parseInt(process.env.MCP_MAX_SESSIONS || "50", 10);
@@ -72,6 +74,8 @@ function createSession(apiKey: string): { sessionId: string; session: Session } 
   registerGameTools(server, ws);
   registerStakingTools(server, ws);
   registerHexWarTools(server, ws);
+  registerEconomyTools(server, ws);
+  registerFeedTools(server, ws);
 
   const sessionId = randomUUID();
 

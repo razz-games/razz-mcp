@@ -696,4 +696,196 @@ export function registerGameTools(server: McpServer, ws: RazzClient): void {
       }
     }
   );
+
+  // ── RPS Challenges ──
+
+  server.tool(
+    `${P}_get_pending_challenges`,
+    "Get incoming RPS challenges waiting for your response. " +
+    "Returns challenge details including challenger, wager amount, and time remaining. " +
+    "Use accept_challenge to respond with your choice, or decline_challenge to dismiss.",
+    {},
+    async () => {
+      const err = requireConnected(ws);
+      if (err) return err;
+      const now = Date.now();
+      const challenges: any[] = [];
+      for (const [id, ch] of ws.pendingChallenges) {
+        if (ch.expiresAt < now) {
+          ws.pendingChallenges.delete(id);
+          continue;
+        }
+        challenges.push({
+          challengeId: ch.challengeId,
+          roomId: ch.roomId,
+          challengerId: ch.challengerId,
+          challengerName: ch.challengerName,
+          targetId: ch.targetId,
+          isForMe: ch.targetId === ws.accountId,
+          wagerAmount: ch.wagerAmount || 0,
+          currency: ch.currency || "free",
+          secondsRemaining: Math.max(0, Math.round((ch.expiresAt - now) / 1000)),
+        });
+      }
+      return jsonResponse({
+        challenges,
+        count: challenges.length,
+        hint: challenges.length > 0
+          ? "Use accept_challenge with the challengeId and your choice (rock/paper/scissors) to respond."
+          : "No pending challenges. Challenges appear when another player challenges you to RPS in a room.",
+      });
+    }
+  );
+
+  server.tool(
+    `${P}_accept_challenge`,
+    "Accept an RPS challenge by submitting your choice (rock, paper, or scissors). " +
+    "Works for both incoming challenges (you're the target) and challenges you created (you're the challenger). " +
+    "Returns the game result once both players have chosen (may wait up to 30s for opponent).",
+    {
+      challengeId: z.string().describe("The challenge ID from get_pending_challenges"),
+      choice: z.enum(["rock", "paper", "scissors"]).describe("Your choice: rock, paper, or scissors"),
+    },
+    async ({ challengeId, choice }) => {
+      const err = requireConnected(ws);
+      if (err) return err;
+
+      const challenge = ws.pendingChallenges.get(challengeId);
+      if (!challenge) {
+        return errorResponse("Challenge not found. It may have expired or been resolved. Use get_pending_challenges to see active challenges.");
+      }
+
+      const roomId = challenge.roomId;
+
+      try {
+        // Auto-join the challenge room if needed
+        if (ws.currentRoom !== roomId) {
+          if (ws.currentRoom) ws._send(ClientOp.LeaveRoom, { roomId: ws.currentRoom });
+          ws.currentRoom = null;
+          await ws.sendAndWait(ClientOp.JoinRoom, { roomId }, ServerOp.RoomInfo, 5000);
+          ws.currentRoom = roomId;
+        }
+
+        // Start waiting for result BEFORE sending action (avoid race)
+        const resultPromise = ws.waitFor(ServerOp.GameResult, 35_000);
+        ws.send(ClientOp.GameAction, { roomId, action: "rps_choice", choice, challengeId });
+
+        const data = await resultPromise;
+        ws.pendingChallenges.delete(challengeId);
+
+        if (data.gameType === "rps_timeout") {
+          return jsonResponse({
+            status: "timeout",
+            message: "Challenge timed out - opponent didn't respond.",
+          });
+        }
+
+        const isWinner = data.winnerId === ws.accountId;
+        const isDraw = data.winnerId === null;
+        return jsonResponse({
+          status: isDraw ? "draw" : isWinner ? "won" : "lost",
+          myChoice: choice,
+          opponentChoice: data.challengerId === ws.accountId ? data.opponentChoice : data.challengerChoice,
+          wagerAmount: data.wagerAmount || 0,
+          payout: isWinner ? (data.winnerPayout || 0) : 0,
+          currency: data.currency || "free",
+        });
+      } catch (e: any) {
+        ws.pendingChallenges.delete(challengeId);
+        return errorResponse(`Challenge error: ${e.message}`);
+      }
+    }
+  );
+
+  server.tool(
+    `${P}_decline_challenge`,
+    "Decline/dismiss an RPS challenge. Removes it from your pending list immediately. " +
+    "The challenger's wager (if any) is refunded when the challenge expires on the server.",
+    {
+      challengeId: z.string().describe("The challenge ID from get_pending_challenges"),
+    },
+    async ({ challengeId }) => {
+      const err = requireConnected(ws);
+      if (err) return err;
+      const existed = ws.pendingChallenges.delete(challengeId);
+      return jsonResponse({
+        declined: true,
+        found: existed,
+        message: existed
+          ? "Challenge dismissed. The challenger's wager will be refunded when it expires."
+          : "Challenge not found (may have already expired).",
+      });
+    }
+  );
+
+  server.tool(
+    `${P}_create_challenge`,
+    "Challenge another player to RPS. You must be in the same room as the target. " +
+    "Sends the challenge and your choice, then waits for the opponent to respond (up to 30s). " +
+    "If they don't respond, the challenge times out and any wager is refunded.",
+    {
+      targetId: z.string().describe("Account ID of the player to challenge"),
+      choice: z.enum(["rock", "paper", "scissors"]).describe("Your choice: rock, paper, or scissors"),
+      wagerAmount: z.number().min(0).max(0.1).optional().describe("Amount to wager in SOL (0 or omit for free play)"),
+      roomId: z.string().optional().describe("Room ID where the target is (uses current room if omitted)"),
+    },
+    async ({ targetId, choice, wagerAmount, roomId: requestedRoom }) => {
+      const err = requireConnected(ws);
+      if (err) return err;
+
+      const roomId = requestedRoom || ws.currentRoom;
+      if (!roomId) {
+        return errorResponse("Not in a room. Join a room first or specify a roomId.");
+      }
+
+      try {
+        // Auto-join the room if needed
+        if (ws.currentRoom !== roomId) {
+          if (ws.currentRoom) ws._send(ClientOp.LeaveRoom, { roomId: ws.currentRoom });
+          ws.currentRoom = null;
+          await ws.sendAndWait(ClientOp.JoinRoom, { roomId }, ServerOp.RoomInfo, 5000);
+          ws.currentRoom = roomId;
+        }
+
+        // Create the challenge and wait for confirmation
+        const challengeData = await ws.sendAndWait(
+          ClientOp.GamePlay,
+          { roomId, gameType: "rps", targetId, wagerAmount: wagerAmount || 0, currency: "SOL" },
+          ServerOp.GameChallenge,
+          10_000
+        );
+
+        // Submit our choice and wait for opponent + result
+        const resultPromise = ws.waitFor(ServerOp.GameResult, 35_000);
+        ws.send(ClientOp.GameAction, {
+          roomId, action: "rps_choice", choice,
+          challengeId: challengeData.challengeId,
+        });
+
+        const data = await resultPromise;
+        ws.pendingChallenges.delete(challengeData.challengeId);
+
+        if (data.gameType === "rps_timeout") {
+          return jsonResponse({
+            status: "timeout",
+            message: "Opponent didn't respond in time. Wager refunded.",
+            wagerAmount: wagerAmount || 0,
+          });
+        }
+
+        const isWinner = data.winnerId === ws.accountId;
+        const isDraw = data.winnerId === null;
+        return jsonResponse({
+          status: isDraw ? "draw" : isWinner ? "won" : "lost",
+          myChoice: choice,
+          opponentChoice: data.challengerId === ws.accountId ? data.opponentChoice : data.challengerChoice,
+          wagerAmount: data.wagerAmount || 0,
+          payout: isWinner ? (data.winnerPayout || 0) : 0,
+          currency: data.currency || "free",
+        });
+      } catch (e: any) {
+        return errorResponse(`Challenge error: ${e.message}`);
+      }
+    }
+  );
 }

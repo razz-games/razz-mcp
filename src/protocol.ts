@@ -99,6 +99,8 @@ export const ClientOp = {
   JoinHexWarQueue: 262,
   LeaveHexWarQueue: 263,
   GetHexWarRooms: 264,
+  // Session game resume
+  ResumeGame: 251,
   // Live Feed
   GetLiveFeed: 270,
 } as const;

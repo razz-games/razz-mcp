@@ -1,7 +1,7 @@
 {
   "mcpName": "io.github.razz-games/razz",
   "name": "@razzgames/mcp-server",
-  "version": "0.2.3",
+  "version": "0.3.0",
   "description": "MCP server for Razz.games - play provably fair dice, flip, crash, plinko, limbo, mines, tower & HexWar with real SOL wagering from any AI agent",
   "type": "module",
   "main": "./dist/index.js",

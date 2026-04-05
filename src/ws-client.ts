@@ -52,6 +52,9 @@ export class RazzClient extends EventEmitter {
   /** Latest hexwar tick per room (updated by broadcast). Capped at 10 entries. */
   hexwarTicks = new Map<string, any>();
   private static readonly MAX_HEXWAR_TICKS = 10;
+  /** Pending RPS challenges (received via GameChallenge opcode). Auto-cleaned on expiry. */
+  pendingChallenges = new Map<string, { roomId: string; challengeId: string; challengerId: string; challengerName: string | null; targetId: string; expiresAt: number; wagerAmount?: number; currency?: string }>();
+  private static readonly MAX_CHALLENGES = 20;
   /** Pending notifications (DMs, @mentions). Capped, collapsed by sender. */
   notifications: Notification[] = [];
   private static readonly MAX_NOTIFICATIONS = 50;
@@ -360,6 +363,29 @@ export class RazzClient extends EventEmitter {
         this._resolvePending(ServerOp.HexWarQueueUpdate, d);
         break;
 
+      // RPS Challenges
+      case ServerOp.GameChallenge:
+        if (d?.challengeId) {
+          this.pendingChallenges.set(d.challengeId, {
+            roomId: d.roomId, challengeId: d.challengeId,
+            challengerId: d.challengerId, challengerName: d.challengerName,
+            targetId: d.targetId, expiresAt: d.expiresAt,
+            wagerAmount: d.wagerAmount, currency: d.currency,
+          });
+          // Evict expired
+          const now = Date.now();
+          for (const [id, ch] of this.pendingChallenges) {
+            if (ch.expiresAt < now) this.pendingChallenges.delete(id);
+          }
+          if (this.pendingChallenges.size > RazzClient.MAX_CHALLENGES) {
+            const oldest = this.pendingChallenges.keys().next().value;
+            if (oldest) this.pendingChallenges.delete(oldest);
+          }
+        }
+        this._resolvePending(ServerOp.GameChallenge, d);
+        this.emit("gameChallenge", d);
+        break;
+
       // Heartbeat ack - server confirmed connection is alive
       case ServerOp.HeartbeatAck:
         this.lastHeartbeatAck = Date.now();
@@ -439,8 +465,8 @@ export class RazzClient extends EventEmitter {
   }
 
   private _rejectPendingGame(err: Error): void {
-    // Reject any pending GameResult, GameState, or GameTick waiters
-    for (const op of [ServerOp.GameResult, ServerOp.GameState, ServerOp.GameTick]) {
+    // Reject any pending GameResult, GameState, GameTick, or GameChallenge waiters
+    for (const op of [ServerOp.GameResult, ServerOp.GameState, ServerOp.GameTick, ServerOp.GameChallenge]) {
       const queue = this.pending.get(op);
       if (queue && queue.length > 0) {
         const entry = queue.shift()!;
@@ -498,6 +524,7 @@ export class RazzClient extends EventEmitter {
     this.currentRoom = null;
     this._ready = false;
     this.hexwarTicks.clear();
+    this.pendingChallenges.clear();
     // Reject all pending requests
     for (const [, queue] of this.pending) {
       for (const entry of queue) {

@@ -12,6 +12,7 @@ import { registerGameTools } from "./tools/games.js";
 import { registerStakingTools } from "./tools/staking.js";
 import { registerHexWarTools } from "./tools/hexwar.js";
 import { registerEconomyTools } from "./tools/economy.js";
+import { registerFeedTools } from "./tools/feed.js";
 
 async function main(): Promise<void> {
   // Create the MCP server
@@ -47,6 +48,7 @@ async function main(): Promise<void> {
   registerStakingTools(server, ws);
   registerHexWarTools(server, ws);
   registerEconomyTools(server, ws);
+  registerFeedTools(server, ws);
 
   // If API key is already set, connect immediately
   if (config.apiKey) {

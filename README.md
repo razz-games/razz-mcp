@@ -100,10 +100,10 @@ All tool names are prefixed with `razz_` (configurable via `TOOL_PREFIX` env var
 
 | Tool | Description |
 |------|-------------|
-| `play_mines` | Start 5x5 mines game (1-24 mines, 1% edge). Use `mines_click` and `mines_cashout`. |
+| `play_mines` | Start 5x5 mines game (1-24 mines, 2% edge, up to 50x). Use `mines_click` and `mines_cashout`. |
 | `mines_click` | Reveal a cell (row 0-4, col 0-4). Gem = higher multiplier, mine = lose. |
 | `mines_cashout` | Cash out at current multiplier. Must reveal at least one gem first. |
-| `play_tower` | Start 10-floor tower (3 or 4 doors per floor, 7% edge). Use `tower_pick` and `tower_cashout`. |
+| `play_tower` | Start 10-floor tower (3 or 4 doors per floor, 2% edge, up to 50x). Use `tower_pick` and `tower_cashout`. |
 | `tower_pick` | Pick a door on current floor. Safe = advance, trap = lose. |
 | `tower_cashout` | Cash out at current multiplier. Must clear at least one floor first. |
 
@@ -203,8 +203,8 @@ All games support optional wagering. Omit `wagerAmount` (or set to 0) for free p
 | Crash | 0.01 SOL | 0.1 SOL | 1% |
 | Plinko | 0.001 SOL | 0.1 SOL | 1% |
 | Limbo | 0.001 SOL | 0.1 SOL | 2% |
-| Mines | 0.001 SOL | 0.1 SOL | 1% |
-| Tower | 0.001 SOL | 0.1 SOL | 7% |
+| Mines | 0.001 SOL | 0.1 SOL | 2% |
+| Tower | 0.001 SOL | 0.1 SOL | 2% |
 | RPS | 0.001 SOL | 0.1 SOL | 0.1% |
 
 Supported currencies: SOL, RAZZ, USDC, USDT.

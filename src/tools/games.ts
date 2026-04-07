@@ -458,7 +458,7 @@ export function registerGameTools(server: McpServer, ws: RazzClient): void {
     "Start a new Mines game - a 5x5 grid with hidden gems and mines. " +
     "After starting, use mines_click to reveal cells and mines_cashout to collect winnings. " +
     "More mines = higher multipliers per gem but more risk. " +
-    "1% house edge. Game auto-ends after 5 minutes.",
+    "2% house edge, up to 50x. Game auto-ends after 5 minutes.",
     {
       mine_count: z.number().min(1).max(24).describe("Number of mines (1-24). More mines = higher risk and reward."),
       wagerAmount: z.number().min(0).max(0.1).optional().describe("Amount to wager in SOL (0 or omit for free play, max 0.1)"),
@@ -567,9 +567,9 @@ export function registerGameTools(server: McpServer, ws: RazzClient): void {
     "Start a new Tower game - climb 10 floors by picking the right door. " +
     "Each floor has one trap door. Pick wrong and you lose. Cash out anytime to lock in your multiplier. " +
     "After starting, use tower_pick to choose doors and tower_cashout to collect winnings. " +
-    "7% house edge. Game auto-ends after 5 minutes.",
+    "2% house edge, up to 50x. Game auto-ends after 5 minutes.",
     {
-      difficulty: z.number().min(3).max(4).describe("Doors per floor: 3 (higher risk, up to ~12x) or 4 (lower risk, up to ~6.5x)"),
+      difficulty: z.number().min(3).max(4).describe("Doors per floor: 3 (higher risk, up to 50x) or 4 (lower risk, up to ~17x)"),
       wagerAmount: z.number().min(0).max(0.1).optional().describe("Amount to wager in SOL (0 or omit for free play, max 0.1)"),
     },
     async ({ difficulty, wagerAmount }) => {
